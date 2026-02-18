@@ -19,7 +19,7 @@ function App() {
     },
     {
       icon: Calendar,
-      title: 'Smart Scheduling',
+      title: 'Smart Scheduling with AI',
       description: 'AI-powered scheduling that optimizes resource allocation and reduces conflicts.',
     },
     {
