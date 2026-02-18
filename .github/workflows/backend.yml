@@ -18,4 +18,4 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         with:
-          service: "your-service-id"
+          service: "facilitymanagement"
