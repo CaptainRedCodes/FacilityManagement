@@ -70,3 +70,6 @@ ENV/
 # Alembic
 alembic/versions/*.py
 .ruff_cache
+
+AGENTS.md
+opencode.json

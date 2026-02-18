@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Checkout code
@@ -25,22 +26,11 @@ jobs:
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
       - name: Install Python dependencies
         working-directory: ./backend
         run: pip install -r requirements.txt
 
-      - name: Link to Railway project
-        run: railway link
-
-      - name: Run migrations
-        working-directory: ./backend
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: railway run alembic upgrade head || true
-
       - name: Deploy to Railway
-        working-directory: ./backend
-        run: railway up
+        uses: railwayhq/railway-action@v1
+        with:
+          command: up
