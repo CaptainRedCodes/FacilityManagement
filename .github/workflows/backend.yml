@@ -11,6 +11,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,25 +32,15 @@ jobs:
         working-directory: ./backend
         run: pip install -r requirements.txt
 
-      - name: Login to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway login
-
       - name: Link to Railway project
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway link
 
       - name: Run migrations
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway run alembic upgrade head || true
 
       - name: Deploy to Railway
         working-directory: ./backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway up
