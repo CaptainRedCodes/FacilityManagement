@@ -1,11 +1,19 @@
-import { Building2, Users, Calendar, Shield, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Building2, Users, Calendar, Shield, ArrowRight, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { useState } from 'react'
+
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 function App() {
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const features = [
     {
       icon: Users,
@@ -29,9 +37,40 @@ function App() {
     },
   ]
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/waitlist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, name: name || undefined }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.detail || 'Failed to join waitlist')
+      }
+
+      setMessage({ type: 'success', text: "You're on the list! We'll be in touch soon." })
+      setEmail('')
+      setName('')
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
-      {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -48,7 +87,6 @@ function App() {
         </div>
       </header>
 
-      {/* Hero Section */}
       <main>
         <section className="py-20 md:py-32 px-4">
           <div className="container mx-auto max-w-4xl text-center">
@@ -67,32 +105,74 @@ function App() {
               workforce scheduling, facility management, and real-time analytics in one platform.
             </p>
 
-            {/* Email Waitlist Form */}
             <Card className="max-w-md mx-auto mb-16 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               <CardContent className="pt-6">
-                <form className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-slate-700">Join the waitlist</Label>
+                    <Label htmlFor="name" className="text-slate-700">Name (optional)</Label>
+                    <Input 
+                      id="name" 
+                      type="text" 
+                      placeholder="Your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-700">Email address</Label>
                     <Input 
                       id="email" 
                       type="email" 
-                      placeholder="Enter your email address" 
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="h-12"
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white font-semibold">
-                    Get Early Access
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white font-semibold"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Joining...
+                      </>
+                    ) : (
+                      <>
+                        Get Early Access
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 </form>
+                
+                {message && (
+                  <div className={`mt-4 p-3 rounded-lg text-sm ${
+                    message.type === 'success' 
+                      ? 'bg-green-50 text-green-700 border border-green-200' 
+                      : 'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {message.type === 'success' ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4" />
+                      )}
+                      {message.text}
+                    </div>
+                  </div>
+                )}
+                
                 <p className="text-xs text-slate-500 mt-4 text-center">
                   Be the first to know when we launch. No spam, ever.
                 </p>
               </CardContent>
             </Card>
 
-            {/* Social Proof */}
             <div className="flex items-center justify-center gap-8 text-sm text-slate-500 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-teal-500" />
@@ -112,7 +192,6 @@ function App() {
 
         <Separator className="my-12" />
 
-        {/* Features Section */}
         <section id="features" className="py-20 px-4">
           <div className="container mx-auto">
             <div className="text-center mb-16">
@@ -140,7 +219,6 @@ function App() {
           </div>
         </section>
 
-        {/* About Section */}
         <section id="about" className="py-20 px-4 bg-slate-50">
           <div className="container mx-auto max-w-3xl">
             <div className="text-center">
@@ -162,7 +240,6 @@ function App() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-12 px-4">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
