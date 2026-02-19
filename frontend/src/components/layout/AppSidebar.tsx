@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -45,9 +46,11 @@ const employeeNavItems: NavItem[] = [
 interface AppSidebarProps {
   collapsed: boolean
   onToggle: () => void
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
-export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: AppSidebarProps) {
   const location = useLocation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -72,11 +75,18 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     navigate("/login")
   }
 
+  const handleNavClick = () => {
+    if (mobileOpen && onMobileClose) {
+      onMobileClose()
+    }
+  }
+
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-white border-r transition-all duration-300 flex flex-col",
-        collapsed ? "w-16" : "w-64"
+        "fixed left-0 top-0 z-50 h-screen bg-white border-r transition-all duration-300 flex flex-col",
+        collapsed ? "lg:w-16" : "lg:w-64",
+        mobileOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"
       )}
     >
       <div className="flex items-center justify-between h-16 px-4 border-b">
@@ -88,18 +98,30 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             <span className="text-lg font-bold text-slate-900">WorkSight</span>
           )}
         </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggle}
-          className="h-8 w-8 p-0"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggle}
+            className="h-8 w-8 p-0 hidden lg:flex"
+          >
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
+          </Button>
+          {mobileOpen && onMobileClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onMobileClose}
+              className="h-8 w-8 p-0 lg:hidden"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
 
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
@@ -110,6 +132,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             <Link
               key={item.href}
               to={item.href}
+              onClick={handleNavClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                 isActive
@@ -130,7 +153,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           onClick={handleLogout}
           className={cn(
             "w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50",
-            collapsed && "justify-center px-0"
+            collapsed && "lg:justify-center px-0"
           )}
         >
           <LogOut className="w-5 h-5" />

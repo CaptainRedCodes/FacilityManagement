@@ -2,7 +2,7 @@ from typing import Optional
 from datetime import datetime, date, timedelta, timezone
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, case
 
 from app.core.database import get_db
 from app.routers.users import require_admin, require_supervisor_or_admin
@@ -89,7 +89,7 @@ def get_late_frequency(
             Attendance.employee_id,
             User.name.label("employee_name"),
             func.count(Attendance.id).label("total_days"),
-            func.sum(func.cast(Attendance.is_late, int)).label("late_days"),
+            func.sum(case((Attendance.is_late == True, 1), else_=0)).label("late_days"),
         )
         .join(User, Attendance.employee_id == User.id)
         .filter(
