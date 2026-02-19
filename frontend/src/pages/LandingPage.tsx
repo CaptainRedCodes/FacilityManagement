@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated} = useAuth()
 
   const features = [
     {
