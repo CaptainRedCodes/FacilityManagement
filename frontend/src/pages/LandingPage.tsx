@@ -15,7 +15,7 @@ export default function LandingPage() {
       description: 'Track employee schedules, attendance, and performance metrics in one unified dashboard.',
     },
     {
-      icon: Building2,
+      icon: Building,
       title: 'Facility Tracking',
       description: 'Monitor assets, equipment maintenance, and facility utilization with real-time insights.',
     },
