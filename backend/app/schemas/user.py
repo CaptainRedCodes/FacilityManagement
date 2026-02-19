@@ -60,6 +60,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    supervisor_id: Optional[int] = None
     status: UserStatus
     created_at: datetime
     updated_at: datetime

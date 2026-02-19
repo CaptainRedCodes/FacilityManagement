@@ -104,7 +104,7 @@ def deactivate_location(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    """Deactivate a location (Admin only)."""
+    """Deactivate a location (Admin only). Reassigns employees to another active location."""
     location = db.query(Location).filter(Location.id == location_id).first()
     if not location:
         raise HTTPException(
@@ -112,6 +112,25 @@ def deactivate_location(
             detail="Location not found",
         )
 
+    # Find another active location to reassign employees
+    new_location = (
+        db.query(Location)
+        .filter(Location.id != location_id, Location.is_active == True)
+        .first()
+    )
+
+    if new_location:
+        # Reassign employees to the new location
+        db.query(User).filter(
+            User.location_id == location_id, User.role == "Employee"
+        ).update({"location_id": new_location.id})
+
+        # Also reassign supervisors at this location
+        db.query(User).filter(
+            User.location_id == location_id, User.role == "Supervisor"
+        ).update({"location_id": new_location.id})
+
+    # Deactivate the location
     location.is_active = False
     db.commit()
     return None

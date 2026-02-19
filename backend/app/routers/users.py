@@ -165,7 +165,14 @@ def list_supervisors(
     current_user: User = Depends(require_admin),
 ):
     """List all supervisors (Admin only)."""
-    return db.query(User).filter(User.role == "Supervisor").all()
+    from sqlalchemy.orm import joinedload
+
+    return (
+        db.query(User)
+        .filter(User.role == "Supervisor")
+        .options(joinedload(User.location), joinedload(User.department))
+        .all()
+    )
 
 
 @users_router.get("/employees", response_model=List[UserResponse])
@@ -174,8 +181,19 @@ def list_employees(
     current_user: User = Depends(require_supervisor_or_admin),
 ):
     """List employees based on role."""
+    from sqlalchemy.orm import joinedload
+
     if current_user.role == "Admin":
-        return db.query(User).filter(User.role == "Employee").all()
+        return (
+            db.query(User)
+            .filter(User.role == "Employee")
+            .options(
+                joinedload(User.supervisor),
+                joinedload(User.location),
+                joinedload(User.department),
+            )
+            .all()
+        )
     else:
         if not current_user.location_id:
             raise HTTPException(
@@ -186,6 +204,11 @@ def list_employees(
             db.query(User)
             .filter(
                 User.role == "Employee", User.location_id == current_user.location_id
+            )
+            .options(
+                joinedload(User.supervisor),
+                joinedload(User.location),
+                joinedload(User.department),
             )
             .all()
         )
@@ -397,6 +420,12 @@ def deactivate_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot deactivate your own account",
         )
+
+    # If deactivating a supervisor, set employees' supervisor_id to NULL
+    if user.role == "Supervisor":
+        db.query(User).filter(
+            User.supervisor_id == user_id, User.role == "Employee"
+        ).update({"supervisor_id": None})
 
     user.status = "Inactive"
     db.commit()

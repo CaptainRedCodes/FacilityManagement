@@ -256,6 +256,8 @@ def get_attendance_history(
 @router.get("/all", response_model=AttendanceListResponse)
 def get_all_attendance(
     date: Optional[date] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     location_id: Optional[int] = Query(None),
     department_id: Optional[int] = Query(None),
     employee_id: Optional[int] = Query(None),
@@ -277,8 +279,16 @@ def get_all_attendance(
             )
         query = query.filter(Attendance.location_id == current_user.location_id)
 
+    # Handle date filtering - supports single date or date range
     if date:
         query = query.filter(Attendance.date == date)
+    elif start_date and end_date:
+        query = query.filter(Attendance.date >= start_date, Attendance.date <= end_date)
+    elif start_date:
+        query = query.filter(Attendance.date >= start_date)
+    elif end_date:
+        query = query.filter(Attendance.date <= end_date)
+
     if location_id:
         query = query.filter(Attendance.location_id == location_id)
     if employee_id:
