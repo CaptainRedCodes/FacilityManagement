@@ -46,6 +46,7 @@ export default function AnalyticsPage() {
   const [locations, setLocations] = useState<Location[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<"overview" | "trends" | "departments" | "locations">("overview")
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function AnalyticsPage() {
   const fetchData = async () => {
     try {
       setIsLoading(true)
+      setError(null)
       const params = selectedLocation ? { location_id: selectedLocation } : {}
       
       const [summaryData, lateData, trendsData, locData, deptData] = await Promise.all([
@@ -83,8 +85,18 @@ export default function AnalyticsPage() {
       setAbsentTrends(trendsData)
       setLocationAttendance(locData)
       setDepartmentAttendance(deptData)
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to fetch analytics:", err)
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosError = err as { response?: { status?: number; data?: { detail?: string } } }
+        if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
+          setError("You don't have permission to view analytics. Please contact your administrator.")
+        } else {
+          setError(axiosError.response?.data?.detail || "Failed to load analytics data")
+        }
+      } else {
+        setError("Failed to load analytics data. Please try again.")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -124,6 +136,27 @@ export default function AnalyticsPage() {
       >
         <div className="flex items-center justify-center h-96">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Analytics" },
+        ]}
+      >
+        <div className="flex flex-col items-center justify-center h-96 gap-4">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <p className="text-lg font-medium text-slate-900">{error}</p>
+          <Button onClick={() => fetchData()} variant="outline">
+            Try Again
+          </Button>
         </div>
       </DashboardLayout>
     )
