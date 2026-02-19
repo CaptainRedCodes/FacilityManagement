@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.seed import seed_admin
+from app.core.seed import seed_admin, seed_dummy_data
 from app.routers import (
     waitlist,
     users,
@@ -17,8 +17,9 @@ from app.routers import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan - seeds admin on startup."""
+    """Application lifespan - seeds data on startup."""
     seed_admin()
+    seed_dummy_data()
     yield
 
 

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
-import { ChevronRight, Home } from "lucide-react"
+import { ChevronRight, Home, Menu } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 
 interface BreadcrumbItem {
   label: string
@@ -10,9 +11,10 @@ interface BreadcrumbItem {
 interface AppHeaderProps {
   breadcrumbs?: BreadcrumbItem[]
   actions?: React.ReactNode
+  onMenuClick?: () => void
 }
 
-export function AppHeader({ breadcrumbs}: AppHeaderProps) {
+export function AppHeader({ breadcrumbs, onMenuClick}: AppHeaderProps) {
   const { user } = useAuth()
   const location = useLocation()
 
@@ -48,8 +50,16 @@ export function AppHeader({ breadcrumbs}: AppHeaderProps) {
   const finalBreadcrumbs = breadcrumbs || generateBreadcrumbs()
 
   return (
-    <header className="h-16 bg-white border-b px-6 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-16 bg-white border-b px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onMenuClick}
+          className="lg:hidden h-9 w-9 p-0"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
         <nav className="flex items-center gap-1 text-sm">
           {finalBreadcrumbs.map((item, index) => (
             <div key={index} className="flex items-center gap-1">
