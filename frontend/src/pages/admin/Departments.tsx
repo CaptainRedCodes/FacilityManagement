@@ -1,12 +1,24 @@
 import { useState, useEffect } from "react"
-import { Building2, Plus, Loader2, AlertCircle, Pencil, Trash2, X } from "lucide-react"
+import { Plus, Loader2, AlertCircle, Pencil, Trash2, X, Building2, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { departmentApi, Department } from "@/api/admin"
+import { DashboardLayout } from "@/components/layout"
 import { toast } from "sonner"
+
+const departmentColors = [
+  "bg-blue-500",
+  "bg-purple-500", 
+  "bg-emerald-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-cyan-500",
+  "bg-orange-500",
+  "bg-pink-500",
+]
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([])
@@ -101,26 +113,68 @@ export default function DepartmentsPage() {
     setError(null)
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-slate-900">WorkSight</span>
-          </div>
-        </div>
-      </header>
+  const activeDepartments = departments.filter(d => d.is_active)
+  const inactiveDepartments = departments.filter(d => !d.is_active)
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+  return (
+    <DashboardLayout
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Departments" },
+      ]}
+      actions={
+        <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Department
+        </Button>
+      }
+    >
+      <div className="space-y-6">
+        <div>
           <h1 className="text-2xl font-bold text-slate-900">Departments</h1>
-          <Button onClick={() => setIsModalOpen(true)} className="bg-teal-600 hover:bg-teal-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Department
-          </Button>
+          <p className="text-slate-600">Organize your team into departments</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-indigo-100 text-sm">Total Departments</p>
+                  <p className="text-3xl font-bold">{departments.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <Building2 className="w-6 h-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm">Active</p>
+                  <p className="text-3xl font-bold text-emerald-600">{activeDepartments.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <Users className="w-6 h-6 text-emerald-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm">Inactive</p>
+                  <p className="text-3xl font-bold text-slate-400">{inactiveDepartments.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-slate-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {error && (
@@ -133,44 +187,100 @@ export default function DepartmentsPage() {
         )}
 
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
+        ) : departments.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <Building2 className="w-8 h-8 text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No departments yet</h3>
+              <p className="text-slate-600 text-center mb-4 max-w-md">
+                Create departments to organize your employees and track attendance by team
+              </p>
+              <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Department
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {departments.map((department) => (
-              <Card key={department.id}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-lg">{department.name}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(department)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(department.id)} className="text-red-600">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    {department.description && (
-                      <p className="text-slate-600">{department.description}</p>
-                    )}
-                    <Badge variant={department.is_active ? "success" : "secondary"}>
-                      {department.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {departments.length === 0 && (
-              <div className="col-span-full text-center py-8 text-slate-500">
-                No departments found. Add your first department.
+          <>
+            {activeDepartments.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Active ({activeDepartments.length})</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activeDepartments.map((department, index) => (
+                    <Card key={department.id} className="hover:shadow-md transition-shadow group">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${departmentColors[index % departmentColors.length]} text-white`}>
+                              <Building2 className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-base">{department.name}</CardTitle>
+                              <Badge variant="success" className="text-xs mt-1">Active</Badge>
+                            </div>
+                          </div>
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(department)} className="h-8 w-8 p-0">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(department.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        {department.description && (
+                          <p className="text-sm text-slate-600 line-clamp-2">{department.description}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
+
+            {inactiveDepartments.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Inactive ({inactiveDepartments.length})</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {inactiveDepartments.map((department) => (
+                    <Card key={department.id} className="opacity-60 hover:opacity-100 transition-opacity group border-dashed">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-200 text-slate-500">
+                              <Building2 className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-base text-slate-700">{department.name}</CardTitle>
+                              <Badge variant="secondary" className="text-xs mt-1">Inactive</Badge>
+                            </div>
+                          </div>
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(department)} className="h-8 w-8 p-0">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(department.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </main>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -191,6 +301,7 @@ export default function DepartmentsPage() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                     disabled={isSubmitting}
+                    placeholder="e.g., Engineering"
                   />
                 </div>
                 <div className="space-y-2">
@@ -200,13 +311,14 @@ export default function DepartmentsPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     disabled={isSubmitting}
+                    placeholder="Brief description of the department"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <Button type="button" variant="outline" onClick={closeModal} className="flex-1" disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-700" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {editingDepartment ? "Update" : "Create"}
                   </Button>
@@ -216,6 +328,6 @@ export default function DepartmentsPage() {
           </Card>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

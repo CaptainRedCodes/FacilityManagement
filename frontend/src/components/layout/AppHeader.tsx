@@ -12,7 +12,7 @@ interface AppHeaderProps {
   actions?: React.ReactNode
 }
 
-export function AppHeader({ breadcrumbs, actions }: AppHeaderProps) {
+export function AppHeader({ breadcrumbs}: AppHeaderProps) {
   const { user } = useAuth()
   const location = useLocation()
 
@@ -70,7 +70,6 @@ export function AppHeader({ breadcrumbs, actions }: AppHeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        {actions}
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-slate-900">{user?.name}</p>

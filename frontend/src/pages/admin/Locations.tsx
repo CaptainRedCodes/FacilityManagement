@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
-import { Building2, Plus, Loader2, AlertCircle, Pencil, Trash2, X, MapPin, Navigation } from "lucide-react"
+import { Plus, Loader2, AlertCircle, Pencil, Trash2, X, MapPin, Navigation, Building2, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { locationApi, Location } from "@/api/admin"
+import { DashboardLayout } from "@/components/layout"
 import { toast } from "sonner"
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
@@ -245,26 +246,26 @@ export default function LocationsPage() {
     setShowMapPicker(false)
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-slate-900">WorkSight</span>
-          </div>
-        </div>
-      </header>
+  const activeLocations = locations.filter(l => l.is_active)
+  const inactiveLocations = locations.filter(l => !l.is_active)
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+  return (
+    <DashboardLayout
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Locations" },
+      ]}
+      actions={
+        <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Location
+        </Button>
+      }
+    >
+      <div className="space-y-6">
+        <div>
           <h1 className="text-2xl font-bold text-slate-900">Locations</h1>
-          <Button onClick={() => setIsModalOpen(true)} className="bg-teal-600 hover:bg-teal-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Location
-          </Button>
+          <p className="text-slate-600">Manage your workplace locations and GPS settings</p>
         </div>
 
         {error && (
@@ -277,52 +278,123 @@ export default function LocationsPage() {
         )}
 
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
+        ) : locations.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <MapPin className="w-8 h-8 text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No locations yet</h3>
+              <p className="text-slate-600 text-center mb-4 max-w-md">
+                Add your first workplace location to start tracking employee attendance
+              </p>
+              <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Location
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {locations.map((location) => (
-              <Card key={location.id}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-lg">{location.name}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(location)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(location.id)} className="text-red-600">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    {location.address && (
-                      <p className="text-slate-600">{location.address}</p>
-                    )}
-                    {location.city && (
-                      <p className="text-slate-600">{location.city}</p>
-                    )}
-                    <div className="flex items-center justify-between pt-2">
-                      <Badge variant={location.is_active ? "success" : "secondary"}>
-                        {location.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                      <span className="text-xs text-slate-500">
-                        Radius: {location.allowed_radius_meters}m
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {locations.length === 0 && (
-              <div className="col-span-full text-center py-8 text-slate-500">
-                No locations found. Add your first location.
+          <>
+            {activeLocations.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Active Locations ({activeLocations.length})</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activeLocations.map((location) => (
+                    <Card key={location.id} className="hover:shadow-md transition-shadow border-l-4 border-l-indigo-500">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                              <MapPin className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <CardTitle className="text-base">{location.name}</CardTitle>
+                          </div>
+                          <Badge variant="success" className="text-xs">Active</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2 text-sm">
+                          {location.address && (
+                            <p className="text-slate-600 flex items-start gap-2">
+                              <Building2 className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
+                              {location.address}
+                              {location.city && `, ${location.city}`}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-slate-500 text-xs flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              Employee check-in radius
+                            </span>
+                            <span className="text-sm font-medium text-slate-700">
+                              {location.allowed_radius_meters}m
+                            </span>
+                          </div>
+                          {location.latitude && location.longitude && (
+                            <div className="flex items-center gap-1 text-xs text-green-600">
+                              <Navigation className="w-3 h-3" />
+                              GPS coordinates set
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-4 pt-3 border-t">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(location)} className="h-8">
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(location.id)} className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
+
+            {inactiveLocations.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Inactive Locations ({inactiveLocations.length})</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {inactiveLocations.map((location) => (
+                    <Card key={location.id} className="opacity-60 hover:opacity-100 transition-opacity border-l-4 border-l-slate-300">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                              <MapPin className="w-5 h-5 text-slate-500" />
+                            </div>
+                            <CardTitle className="text-base text-slate-700">{location.name}</CardTitle>
+                          </div>
+                          <Badge variant="secondary" className="text-xs">Inactive</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center gap-1 mt-4 pt-3 border-t">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(location)} className="h-8">
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(location.id)} className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </main>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -343,6 +415,7 @@ export default function LocationsPage() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                     disabled={isSubmitting}
+                    placeholder="e.g., Main Office"
                   />
                 </div>
                 <div className="space-y-2">
@@ -352,6 +425,7 @@ export default function LocationsPage() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     disabled={isSubmitting}
+                    placeholder="123 Business Street"
                   />
                 </div>
                 <div className="space-y-2">
@@ -361,6 +435,7 @@ export default function LocationsPage() {
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     disabled={isSubmitting}
+                    placeholder="New York"
                   />
                 </div>
                 
@@ -423,12 +498,13 @@ export default function LocationsPage() {
                     onChange={(e) => setFormData({ ...formData, allowed_radius_meters: parseInt(e.target.value) || 150 })}
                     disabled={isSubmitting}
                   />
+                  <p className="text-xs text-slate-500">Employees must be within this radius to check in</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <Button type="button" variant="outline" onClick={closeModal} className="flex-1" disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-700" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {editingLocation ? "Update" : "Create"}
                   </Button>
@@ -438,6 +514,6 @@ export default function LocationsPage() {
           </Card>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

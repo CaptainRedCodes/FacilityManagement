@@ -23,7 +23,7 @@ export function DashboardLayout({ children, breadcrumbs, actions }: DashboardLay
         collapsed={sidebarCollapsed} 
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
-      <div className={sidebarCollapsed ? "ml-16" : "ml-64"} transition-all duration-300>
+      <div className={`${sidebarCollapsed ? "ml-16" : "ml-64"} transition-all duration-300`}>
         <AppHeader 
           breadcrumbs={breadcrumbs} 
           actions={actions} 
