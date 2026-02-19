@@ -106,7 +106,7 @@ def deactivate_department(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    """Deactivate a department (Admin only)."""
+    """Deactivate a department (Admin only). Reassigns employees to another active department."""
     department = db.query(Department).filter(Department.id == department_id).first()
     if not department:
         raise HTTPException(
@@ -114,6 +114,20 @@ def deactivate_department(
             detail="Department not found",
         )
 
+    # Find another active department to reassign employees
+    new_department = (
+        db.query(Department)
+        .filter(Department.id != department_id, Department.is_active == True)
+        .first()
+    )
+
+    if new_department:
+        # Reassign employees to the new department
+        db.query(User).filter(
+            User.department_id == department_id, User.role == "Employee"
+        ).update({"department_id": new_department.id})
+
+    # Deactivate the department
     department.is_active = False
     db.commit()
     return None
