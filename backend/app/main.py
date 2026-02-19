@@ -1,13 +1,32 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import waitlist
+from app.core.seed import seed_admin
+from app.routers import (
+    waitlist,
+    users,
+    locations,
+    departments,
+    attendance,
+    shifts,
+    analytics,
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan - seeds admin on startup."""
+    seed_admin()
+    yield
+
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="Intelligent Workforce & Facility Management Platform",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -19,6 +38,13 @@ app.add_middleware(
 )
 
 app.include_router(waitlist.router)
+app.include_router(users.router, prefix=settings.API_V1_PREFIX)
+app.include_router(users.users_router, prefix=settings.API_V1_PREFIX)
+app.include_router(locations.router, prefix=settings.API_V1_PREFIX)
+app.include_router(departments.router, prefix=settings.API_V1_PREFIX)
+app.include_router(attendance.router, prefix=settings.API_V1_PREFIX)
+app.include_router(shifts.router, prefix=settings.API_V1_PREFIX)
+app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health")

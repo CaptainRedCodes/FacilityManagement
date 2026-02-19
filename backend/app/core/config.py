@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
 
+    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    DEFAULT_ADMIN_EMAIL: str = "admin@worksight.com"
+    DEFAULT_ADMIN_PASSWORD: str = "admin123"
+    DEFAULT_ADMIN_NAME: str = "Admin"
+
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://facility-management-three.vercel.app"
 
     @property
