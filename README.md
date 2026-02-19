@@ -102,32 +102,28 @@ VITE_API_URL=https://your-backend.railway.app
 
 ```env
 DATABASE_URL=postgresql://username:password@hostname:port/database_name
+JWT_SECRET_KEY=your-super-secret-key-change-in-production
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
 APP_NAME=WorkSight
 APP_VERSION=1.0.0
 DEBUG=False
+API_V1_PREFIX=/api/v1
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
-## API Endpoints
+## User Roles
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/` | Root endpoint |
-| POST | `/api/v1/waitlist` | Join waitlist |
-| GET | `/api/v1/waitlist/count` | Get waitlist count |
+- **Admin**: Full CRUD access to all users, can create/edit/deactivate users
+- **Supervisor**: Read-only access to users in their location/department
+- **Employee**: Can only view their own profile
 
 ## Database Migrations
-
-### Create a new migration
-
-```bash
-cd backend
-alembic revision --autogenerate -m "description"
-```
 
 ### Run migrations
 
 ```bash
+cd backend
 alembic upgrade head
 ```
 
@@ -136,6 +132,8 @@ alembic upgrade head
 ```bash
 alembic downgrade -1
 ```
+
+## Running the Application
 
 ## Deployment
 
