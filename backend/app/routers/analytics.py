@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.attendance import Attendance
 from app.models.location import Location
 from app.models.department import Department
+from app.services import attendance as attendance_service
 
 router = APIRouter(prefix="/attendance/analytics", tags=["Attendance Analytics"])
 
@@ -22,17 +23,33 @@ def get_attendance_summary(
     db: Session = Depends(get_db),
 ):
     """Get attendance summary stats."""
-    if not date:
-        date = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone.utc).date()
 
-    employees_query = db.query(User).filter(User.role == "Employee")
+    if not date:
+        latest_date_with_data = (
+            db.query(func.max(Attendance.date))
+            .filter(Attendance.status.in_(["present", "checked_out"]))
+            .scalar()
+        )
+        if latest_date_with_data:
+            date = latest_date_with_data
+        else:
+            date = today
+
+    attendance_service.ensure_daily_attendance(db)
+
+    employees_query = db.query(User).filter(
+        User.role == "Employee", User.status == "Active"
+    )
     if current_user.role == "Supervisor" and current_user.location_id:
         employees_query = employees_query.filter(
             User.location_id == current_user.location_id
         )
     total_employees = employees_query.count()
 
-    attendance_query = db.query(Attendance).filter(Attendance.date == date)
+    attendance_query = db.query(Attendance).filter(
+        Attendance.date == date, Attendance.status.in_(["present", "checked_out"])
+    )
     if current_user.role == "Supervisor" and current_user.location_id:
         attendance_query = attendance_query.filter(
             Attendance.location_id == current_user.location_id
@@ -43,12 +60,18 @@ def get_attendance_summary(
         )
 
     today_records = attendance_query.all()
-    present_count = len(
-        [r for r in today_records if r.status in ["present", "checked_out"]]
-    )
+    present_count = len(today_records)
     late_count = len([r for r in today_records if r.is_late])
     checked_out_count = len([r for r in today_records if r.status == "checked_out"])
-    absent_count = total_employees - present_count
+
+    not_marked_count = (
+        db.query(Attendance)
+        .filter(Attendance.date == date, Attendance.status == "not_marked")
+        .count()
+    )
+    absent_count = total_employees - present_count - not_marked_count
+    if absent_count < 0:
+        absent_count = 0
 
     supervisors_query = db.query(User).filter(User.role == "Supervisor")
     if current_user.role == "Supervisor" and current_user.location_id:
@@ -67,6 +90,7 @@ def get_attendance_summary(
         "today_absent": absent_count,
         "today_late": late_count,
         "today_checked_out": checked_out_count,
+        "today_not_marked": not_marked_count,
     }
 
 
@@ -84,6 +108,8 @@ def get_late_frequency(
     if not start_date:
         start_date = end_date - timedelta(days=30)
 
+    attendance_service.ensure_daily_attendance(db)
+
     query = (
         db.query(
             Attendance.employee_id,
@@ -95,6 +121,7 @@ def get_late_frequency(
         .filter(
             Attendance.date >= start_date,
             Attendance.date <= end_date,
+            User.status == "Active",
         )
     )
 
@@ -127,10 +154,26 @@ def get_absent_trends(
     db: Session = Depends(get_db),
 ):
     """Get absent trends over last N days."""
-    end_date = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone.utc).date()
+
+    latest_date_with_data = (
+        db.query(func.max(Attendance.date))
+        .filter(Attendance.status.in_(["present", "checked_out"]))
+        .scalar()
+    )
+
+    if latest_date_with_data:
+        end_date = latest_date_with_data
+    else:
+        end_date = today
+
     start_date = end_date - timedelta(days=days - 1)
 
-    employees_query = db.query(User).filter(User.role == "Employee")
+    attendance_service.ensure_daily_attendance(db)
+
+    employees_query = db.query(User).filter(
+        User.role == "Employee", User.status == "Active"
+    )
     if current_user.role == "Supervisor" and current_user.location_id:
         employees_query = employees_query.filter(
             User.location_id == current_user.location_id
@@ -153,7 +196,20 @@ def get_absent_trends(
 
         present_count = db.query(Attendance).filter(*base_filter).count()
 
-        absent_count = total_employees - present_count
+        if current_date == today:
+            not_marked_count = (
+                db.query(Attendance)
+                .filter(
+                    Attendance.date == current_date, Attendance.status == "not_marked"
+                )
+                .count()
+            )
+            absent_count = total_employees - present_count - not_marked_count
+            if absent_count < 0:
+                absent_count = 0
+        else:
+            absent_count = total_employees - present_count
+
         trends.append(
             {
                 "date": current_date.isoformat(),
@@ -172,8 +228,20 @@ def get_attendance_by_location(
     db: Session = Depends(get_db),
 ):
     """Get attendance breakdown by location."""
+    today = datetime.now(timezone.utc).date()
+
     if not date:
-        date = datetime.now(timezone.utc).date()
+        latest_date_with_data = (
+            db.query(func.max(Attendance.date))
+            .filter(Attendance.status.in_(["present", "checked_out"]))
+            .scalar()
+        )
+        if latest_date_with_data:
+            date = latest_date_with_data
+        else:
+            date = today
+
+    attendance_service.ensure_daily_attendance(db)
 
     if current_user.role == "Supervisor" and current_user.location_id:
         locations = (
@@ -191,6 +259,7 @@ def get_attendance_by_location(
             db.query(User)
             .filter(
                 User.role == "Employee",
+                User.status == "Active",
                 User.location_id == location.id,
             )
             .count()
@@ -240,8 +309,20 @@ def get_attendance_by_department(
     db: Session = Depends(get_db),
 ):
     """Get attendance breakdown by department."""
+    today = datetime.now(timezone.utc).date()
+
     if not date:
-        date = datetime.now(timezone.utc).date()
+        latest_date_with_data = (
+            db.query(func.max(Attendance.date))
+            .filter(Attendance.status.in_(["present", "checked_out"]))
+            .scalar()
+        )
+        if latest_date_with_data:
+            date = latest_date_with_data
+        else:
+            date = today
+
+    attendance_service.ensure_daily_attendance(db)
 
     if current_user.role == "Supervisor" and current_user.location_id:
         departments = (
@@ -264,6 +345,7 @@ def get_attendance_by_department(
             db.query(User)
             .filter(
                 User.role == "Employee",
+                User.status == "Active",
                 User.department_id == dept.id,
             )
             .count()

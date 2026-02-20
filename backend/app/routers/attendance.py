@@ -180,6 +180,8 @@ def get_today_attendance(
     db: Session = Depends(get_db),
 ):
     """Get today's attendance for current employee."""
+    attendance_service.ensure_daily_attendance(db)
+
     attendance = attendance_service.get_todays_attendance(current_user.id, db)
     if not attendance:
         return None
@@ -210,6 +212,8 @@ def get_attendance_history(
     db: Session = Depends(get_db),
 ):
     """Get attendance history for current employee."""
+    attendance_service.ensure_daily_attendance(db)
+
     if not end_date:
         end_date = datetime.now(timezone.utc).date()
     if not start_date:
@@ -267,6 +271,8 @@ def get_all_attendance(
     db: Session = Depends(get_db),
 ):
     """Get all attendance records (Admin/Supervisor only)."""
+    attendance_service.ensure_daily_attendance(db)
+
     query = db.query(Attendance).options(
         joinedload(Attendance.employee), joinedload(Attendance.location)
     )

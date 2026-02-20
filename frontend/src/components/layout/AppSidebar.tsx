@@ -21,7 +21,6 @@ interface NavItem {
   label: string
   href: string
   icon: React.ElementType
-  roles?: string[]
 }
 
 const adminNavItems: NavItem[] = [
@@ -84,26 +83,26 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: A
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-50 h-screen bg-white border-r transition-all duration-300 flex flex-col",
-        collapsed ? "lg:w-16" : "lg:w-64",
-        mobileOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:translate-x-0"
+        "fixed left-0 top-0 z-50 h-screen bg-white border-r border-gray-200 transition-all duration-200 flex flex-col",
+        collapsed ? "lg:w-16" : "lg:w-56",
+        mobileOpen ? "w-56 translate-x-0" : "w-56 -translate-x-full lg:translate-x-0"
       )}
     >
-      <div className="flex items-center justify-between h-16 px-4 border-b">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
+        <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+          <div className="w-8 h-8 bg-gray-900 rounded-md flex items-center justify-center flex-shrink-0">
             <Building2 className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
-            <span className="text-lg font-bold text-slate-900">WorkSight</span>
+            <span className="text-sm font-semibold text-gray-900">WorkSight</span>
           )}
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="h-8 w-8 p-0 hidden lg:flex"
+            className="h-8 w-8 p-0 hidden lg:flex text-gray-400 hover:text-gray-900 hover:bg-gray-100"
           >
             {collapsed ? (
               <ChevronRight className="w-4 h-4" />
@@ -116,7 +115,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: A
               variant="ghost"
               size="sm"
               onClick={onMobileClose}
-              className="h-8 w-8 p-0 lg:hidden"
+              className="h-8 w-8 p-0 lg:hidden text-gray-400 hover:text-gray-900 hover:bg-gray-100"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -124,7 +123,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: A
         </div>
       </div>
 
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2.5 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
             (item.href !== "/dashboard" && location.pathname.startsWith(item.href))
@@ -134,29 +133,29 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: A
               to={item.href}
               onClick={handleNavClick}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
                 isActive
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               )}
             >
-              <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-indigo-600")} />
+              <item.icon className={cn("w-4.5 h-4.5 flex-shrink-0", isActive && "text-gray-900")} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-2 border-t">
+      <div className="p-2.5 border-t border-gray-100">
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50",
+            "w-full justify-start text-gray-500 hover:text-gray-900 hover:bg-gray-100 cursor-pointer text-sm",
             collapsed && "lg:justify-center px-0"
           )}
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-4.5 h-4.5" />
           {!collapsed && <span className="ml-2">Logout</span>}
         </Button>
       </div>

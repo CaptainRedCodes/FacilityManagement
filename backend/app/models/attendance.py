@@ -24,7 +24,7 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
-    check_in_time = Column(DateTime(timezone=True), nullable=False)
+    check_in_time = Column(DateTime(timezone=True), nullable=True)
     check_out_time = Column(DateTime(timezone=True), nullable=True)
     check_in_latitude = Column(Float, nullable=False)
     check_in_longitude = Column(Float, nullable=False)

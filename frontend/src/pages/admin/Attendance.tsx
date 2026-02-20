@@ -128,12 +128,12 @@ export default function AttendanceRecordsPage() {
 
   const getStatusBadge = (status: string, isLate: boolean) => {
     if (status === "checked_out") {
-      return <Badge variant="outline" className="bg-slate-100 text-slate-700">Checked Out</Badge>
+      return <Badge variant="outline" className="bg-muted text-muted-foreground">Checked Out</Badge>
     }
     if (isLate) {
-      return <Badge variant="warning">Late</Badge>
+      return <Badge variant="warning" className="bg-amber-100 text-amber-700 border-amber-200">Late</Badge>
     }
-    return <Badge variant="success">Present</Badge>
+    return <Badge variant="success" className="bg-emerald-100 text-emerald-700 border-emerald-200">Present</Badge>
   }
 
   const filteredRecords = searchQuery
@@ -170,8 +170,8 @@ export default function AttendanceRecordsPage() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Attendance Records</h1>
-          <p className="text-slate-600">Track and manage employee attendance</p>
+          <h1 className="text-2xl font-bold text-foreground">Attendance Records</h1>
+          <p className="text-muted-foreground">Track and manage employee attendance</p>
         </div>
 
         <Card>
@@ -179,7 +179,7 @@ export default function AttendanceRecordsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search employee or location..."
                     value={searchQuery}
@@ -191,12 +191,12 @@ export default function AttendanceRecordsPage() {
                   variant={showFilters ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={showFilters ? "bg-indigo-600" : ""}
+                  className={showFilters ? "bg-primary" : ""}
                 >
                   <Filter className="w-4 h-4 mr-2" />
                   Filters
                   {hasActiveFilters && (
-                    <span className="ml-1 w-2 h-2 bg-indigo-500 rounded-full" />
+                    <span className="ml-1 w-2 h-2 bg-primary rounded-full" />
                   )}
                 </Button>
               </div>
@@ -205,7 +205,7 @@ export default function AttendanceRecordsPage() {
                   variant={dateFilterType === "today" ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleDateFilterChange("today")}
-                  className={dateFilterType === "today" ? "bg-indigo-600" : ""}
+                  className={dateFilterType === "today" ? "bg-black" : ""}
                 >
                   Today
                 </Button>
@@ -213,7 +213,7 @@ export default function AttendanceRecordsPage() {
                   variant={dateFilterType === "week" ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleDateFilterChange("week")}
-                  className={dateFilterType === "week" ? "bg-indigo-600" : ""}
+                  className={dateFilterType === "week" ? "bg-black" : ""}
                 >
                   This Week
                 </Button>
@@ -221,7 +221,7 @@ export default function AttendanceRecordsPage() {
                   variant={dateFilterType === "custom" ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleDateFilterChange("custom")}
-                  className={dateFilterType === "custom" ? "bg-indigo-600" : ""}
+                  className={dateFilterType === "custom" ? "bg-black" : ""}
                 >
                   Custom
                 </Button>
@@ -293,29 +293,29 @@ export default function AttendanceRecordsPage() {
             )}
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+          {isLoading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto -mx-6">
                   <table className="w-full min-w-[800px]">
                     <thead>
-                      <tr className="border-b bg-slate-50">
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Date</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Employee</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Location</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Check In</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Check Out</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Status</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-600 text-sm">Notes</th>
+                      <tr className="border-b bg-muted">
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Employee</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Location</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Check In</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Check Out</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Notes</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredRecords.map((record) => (
-                        <tr key={record.id} className="border-b hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3 px-4 text-sm text-slate-600">
+                        <tr key={record.id} className="border-b hover:bg-muted/50 transition-colors">
+                          <td className="py-3 px-4 text-sm text-muted-foreground">
                             {new Date(record.date).toLocaleDateString("en-US", { 
                               month: "short", 
                               day: "numeric" 
@@ -323,17 +323,17 @@ export default function AttendanceRecordsPage() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                              <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-medium">
                                 {record.employee_name.charAt(0).toUpperCase()}
                               </div>
-                              <span className="font-medium text-sm">{record.employee_name}</span>
+                              <span className="font-medium text-sm text-foreground">{record.employee_name}</span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-sm text-slate-600">{record.location_name}</td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground">{record.location_name}</td>
                           <td className="py-3 px-4 text-sm">
-                            <span className="text-slate-900">{new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-foreground">{new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </td>
-                          <td className="py-3 px-4 text-sm text-slate-500">
+                          <td className="py-3 px-4 text-sm text-muted-foreground">
                             {record.check_out_time 
                               ? new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                               : "-"}
@@ -379,7 +379,7 @@ export default function AttendanceRecordsPage() {
                         <ChevronLeft className="w-4 h-4" />
                       </Button>
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        {Array.from({ length: totalPages }, (_, i) => {
                           const pageNum = i + 1
                           return (
                             <Button
@@ -387,7 +387,7 @@ export default function AttendanceRecordsPage() {
                               variant={page === pageNum ? "default" : "ghost"}
                               size="sm"
                               onClick={() => setPage(pageNum)}
-                              className={page === pageNum ? "bg-indigo-600" : ""}
+                              className={page === pageNum ? "bg-primary" : ""}
                             >
                               {pageNum}
                             </Button>

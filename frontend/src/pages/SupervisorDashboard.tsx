@@ -159,12 +159,12 @@ export default function SupervisorDashboard() {
 
   const getStatusBadge = (status: string, isLate: boolean) => {
     if (status === "checked_out") {
-      return <Badge variant="info">Checked Out</Badge>
+      return <Badge variant="outline" className="bg-muted text-muted-foreground">Checked Out</Badge>
     }
     if (isLate) {
-      return <Badge variant="warning">Late</Badge>
+      return <Badge variant="warning" className="bg-amber-100 text-amber-700 border-amber-200">Late</Badge>
     }
-    return <Badge variant="success">Present</Badge>
+    return <Badge variant="success" className="bg-emerald-100 text-emerald-700 border-emerald-200">Present</Badge>
   }
 
   const getCheckedInCount = () => {
@@ -179,7 +179,7 @@ export default function SupervisorDashboard() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </DashboardLayout>
     )
@@ -192,7 +192,7 @@ export default function SupervisorDashboard() {
         { label: "My Team" },
       ]}
       actions={
-        <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary/90 cursor-pointer">
           <Plus className="w-4 h-4 mr-2" />
           Add Employee
         </Button>
@@ -200,8 +200,8 @@ export default function SupervisorDashboard() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Team</h1>
-          <p className="text-slate-600">Manage your employees and view their attendance</p>
+          <h1 className="text-2xl font-bold text-foreground">My Team</h1>
+          <p className="text-muted-foreground">Manage your employees and view their attendance</p>
         </div>
 
         {error && (
@@ -245,41 +245,41 @@ export default function SupervisorDashboard() {
             {employees.map((employee) => {
               const attendance = getEmployeeAttendance(employee.id)
               return (
-                <Card key={employee.id} className="hover:shadow-md transition-shadow">
+              <Card key={employee.id} className="hover:shadow-md transition-shadow border-border">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
                           {employee.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium">{employee.name}</p>
-                          <p className="text-sm text-slate-500">{employee.email}</p>
+                          <p className="font-medium text-foreground">{employee.name}</p>
+                          <p className="text-sm text-muted-foreground">{employee.email}</p>
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)} className="cursor-pointer">
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(employee.id)} className="text-red-600">
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(employee.id)} className="text-destructive cursor-pointer">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-500">Location:</span>
-                        <span className="font-medium">{employee.location?.name || "Not assigned"}</span>
+                        <span className="text-muted-foreground">Location:</span>
+                        <span className="font-medium text-foreground">{employee.location?.name || "Not assigned"}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-500">Status:</span>
+                        <span className="text-muted-foreground">Status:</span>
                         {attendance 
                           ? getStatusBadge(attendance.status, attendance.is_late)
                           : <Badge variant="destructive">Absent</Badge>
                         }
                       </div>
                       {attendance && (
-                        <div className="text-xs text-slate-500 pt-2 border-t mt-2">
+                        <div className="text-xs text-muted-foreground pt-2 border-t mt-2">
                           <p>Check-in: {new Date(attendance.check_in_time).toLocaleTimeString()}</p>
                           {attendance.is_late && (
                             <p className="text-amber-600">Late by {attendance.late_by_minutes} mins</p>
@@ -364,7 +364,7 @@ export default function SupervisorDashboard() {
                   <Button type="button" variant="outline" onClick={closeModal} className="flex-1" disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

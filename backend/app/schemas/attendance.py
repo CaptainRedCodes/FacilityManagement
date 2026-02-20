@@ -14,7 +14,7 @@ class AttendanceResponse(BaseModel):
     employee_name: str
     location_id: int
     location_name: str
-    check_in_time: datetime
+    check_in_time: Optional[datetime] = None
     check_out_time: Optional[datetime] = None
     is_late: bool
     late_by_minutes: int

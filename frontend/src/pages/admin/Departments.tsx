@@ -10,14 +10,14 @@ import { DashboardLayout } from "@/components/layout"
 import { toast } from "sonner"
 
 const departmentColors = [
-  "bg-blue-500",
-  "bg-purple-500", 
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-cyan-500",
-  "bg-orange-500",
-  "bg-pink-500",
+  "bg-black",
+  "bg-gray-800", 
+  "bg-gray-700",
+  "bg-gray-600",
+  "bg-gray-500",
+  "bg-gray-400",
+  "bg-gray-300",
+  "bg-gray-200",
 ]
 
 export default function DepartmentsPage() {
@@ -123,7 +123,7 @@ export default function DepartmentsPage() {
         { label: "Departments" },
       ]}
       actions={
-        <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button onClick={() => setIsModalOpen(true)} className="bg-black hover:bg-gray-800">
           <Plus className="w-4 h-4 mr-2" />
           Add Department
         </Button>
@@ -136,11 +136,11 @@ export default function DepartmentsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+          <Card className="bg-gradient-to-br from-black to-gray-800 text-white">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-indigo-100 text-sm">Total Departments</p>
+                  <p className="text-gray-300 text-sm">Total Departments</p>
                   <p className="text-3xl font-bold">{departments.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -154,10 +154,10 @@ export default function DepartmentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-sm">Active</p>
-                  <p className="text-3xl font-bold text-emerald-600">{activeDepartments.length}</p>
+                  <p className="text-3xl font-bold text-black">{activeDepartments.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <Users className="w-6 h-6 text-emerald-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Users className="w-6 h-6 text-black" />
                 </div>
               </div>
             </CardContent>
@@ -188,19 +188,19 @@ export default function DepartmentsPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-black" />
           </div>
         ) : departments.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                <Building2 className="w-8 h-8 text-indigo-600" />
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Building2 className="w-8 h-8 text-black" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">No departments yet</h3>
               <p className="text-slate-600 text-center mb-4 max-w-md">
                 Create departments to organize your employees and track attendance by team
               </p>
-              <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button onClick={() => setIsModalOpen(true)} className="bg-black hover:bg-gray-800">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Department
               </Button>
@@ -222,7 +222,7 @@ export default function DepartmentsPage() {
                             </div>
                             <div>
                               <CardTitle className="text-base">{department.name}</CardTitle>
-                              <Badge variant="success" className="text-xs mt-1">Active</Badge>
+                              <Badge variant="success" className="bg-gray-100 text-black border-gray-200 text-xs mt-1">Active</Badge>
                             </div>
                           </div>
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -260,7 +260,7 @@ export default function DepartmentsPage() {
                             </div>
                             <div>
                               <CardTitle className="text-base text-slate-700">{department.name}</CardTitle>
-                              <Badge variant="secondary" className="text-xs mt-1">Inactive</Badge>
+                              <Badge variant="secondary" className="bg-gray-100 text-slate-600 border-gray-200 text-xs mt-1">Inactive</Badge>
                             </div>
                           </div>
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -318,7 +318,7 @@ export default function DepartmentsPage() {
                   <Button type="button" variant="outline" onClick={closeModal} className="flex-1" disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-black hover:bg-gray-800" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {editingDepartment ? "Update" : "Create"}
                   </Button>
