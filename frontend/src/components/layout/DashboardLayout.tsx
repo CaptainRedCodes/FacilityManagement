@@ -19,11 +19,10 @@ export function DashboardLayout({ children, breadcrumbs, actions }: DashboardLay
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile sidebar overlay */}
+    <div className="min-h-screen bg-gray-50">
       {mobileSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-gray-900/40 z-40 lg:hidden cursor-pointer"
           onClick={() => setMobileSidebarOpen(false)}
         />
       )}
@@ -34,7 +33,7 @@ export function DashboardLayout({ children, breadcrumbs, actions }: DashboardLay
         mobileOpen={mobileSidebarOpen}
         onMobileClose={() => setMobileSidebarOpen(false)}
       />
-      <div className={`${sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"} transition-all duration-300`}>
+      <div className={`${sidebarCollapsed ? "lg:ml-16" : "lg:ml-56"} transition-all duration-200`}>
         <AppHeader 
           breadcrumbs={breadcrumbs} 
           actions={actions}

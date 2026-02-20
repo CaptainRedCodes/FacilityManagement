@@ -11,16 +11,16 @@ import { toast } from "sonner"
 
 function getShiftIcon(startTime: string) {
   const hour = parseInt(startTime.split(":")[0])
-  if (hour < 12) return <Sunrise className="w-5 h-5 text-amber-500" />
-  if (hour < 18) return <Sunset className="w-5 h-5 text-orange-500" />
-  return <Moon className="w-5 h-5 text-indigo-500" />
+  if (hour < 12) return <Sunrise className="w-5 h-5 text-gray-600" />
+  if (hour < 18) return <Sunset className="w-5 h-5 text-gray-600" />
+  return <Moon className="w-5 h-5 text-gray-600" />
 }
 
 function getShiftColor(startTime: string) {
   const hour = parseInt(startTime.split(":")[0])
-  if (hour < 12) return "border-l-amber-400 bg-amber-50"
-  if (hour < 18) return "border-l-orange-400 bg-orange-50"
-  return "border-l-indigo-400 bg-indigo-50"
+  if (hour < 12) return "border-l-gray-400 bg-gray-50"
+  if (hour < 18) return "border-l-gray-500 bg-gray-50"
+  return "border-l-gray-600 bg-gray-50"
 }
 
 function formatTimeRange(start: string, end: string) {
@@ -168,7 +168,7 @@ export default function ShiftsPage() {
         { label: "Shifts" },
       ]}
       actions={
-        <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button onClick={() => setIsModalOpen(true)} className="bg-black hover:bg-gray-800">
           <Plus className="w-4 h-4 mr-2" />
           Add Shift
         </Button>
@@ -181,11 +181,11 @@ export default function ShiftsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+          <Card className="bg-gradient-to-br from-black to-gray-800 text-white">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-indigo-100 text-sm">Total Shifts</p>
+                  <p className="text-gray-300 text-sm">Total Shifts</p>
                   <p className="text-3xl font-bold">{shifts.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -199,10 +199,10 @@ export default function ShiftsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-sm">Locations</p>
-                  <p className="text-3xl font-bold text-indigo-600">{Object.keys(shiftsByLocation).length}</p>
+                  <p className="text-3xl font-bold text-black">{Object.keys(shiftsByLocation).length}</p>
                 </div>
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-indigo-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-black" />
                 </div>
               </div>
             </CardContent>
@@ -212,10 +212,10 @@ export default function ShiftsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-sm">Configured</p>
-                  <p className="text-3xl font-bold text-emerald-600">{locations.length}</p>
+                  <p className="text-3xl font-bold text-black">{locations.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-emerald-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-black" />
                 </div>
               </div>
             </CardContent>
@@ -233,19 +233,19 @@ export default function ShiftsPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-black" />
           </div>
         ) : shifts.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                <Clock className="w-8 h-8 text-indigo-600" />
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Clock className="w-8 h-8 text-black" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">No shifts configured</h3>
               <p className="text-slate-600 text-center mb-4 max-w-md">
                 Create shift schedules to define work hours for your employees
               </p>
-              <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button onClick={() => setIsModalOpen(true)} className="bg-black hover:bg-gray-800">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Shift
               </Button>
@@ -388,7 +388,7 @@ export default function ShiftsPage() {
                   <Button type="button" variant="outline" onClick={closeModal} className="flex-1" disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-black hover:bg-gray-800" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {editingShift ? "Update" : "Create"}
                   </Button>

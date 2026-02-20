@@ -8,6 +8,7 @@ export interface DashboardStats {
   today_absent: number
   today_late: number
   today_checked_out: number
+  today_not_marked: number
 }
 
 export interface AttendanceRecord {

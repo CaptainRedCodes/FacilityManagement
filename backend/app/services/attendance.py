@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.attendance import Attendance
 from app.models.location import Location
 from app.models.shift import ShiftConfig
+from app.models.user import User
 from app.services.geo import is_within_radius
 
 
@@ -134,3 +135,45 @@ def validate_location(
 def get_shift_config(location_id: int, db: Session) -> Optional[ShiftConfig]:
     """Get shift configuration for a location."""
     return db.query(ShiftConfig).filter(ShiftConfig.location_id == location_id).first()
+
+
+def ensure_daily_attendance(db: Session) -> None:
+    """Create attendance records for all active employees if not exists for today."""
+    today = date.today()
+
+    existing_ids = {
+        a.employee_id
+        for a in db.query(Attendance).filter(Attendance.date == today).all()
+    }
+
+    employees = (
+        db.query(User).filter(User.role == "Employee", User.status == "Active").all()
+    )
+
+    new_records = []
+    for employee in employees:
+        if employee.id in existing_ids:
+            continue
+        if not employee.location_id:
+            continue
+
+        new_records.append(
+            Attendance(
+                employee_id=employee.id,
+                location_id=employee.location_id,
+                check_in_time=None,
+                check_out_time=None,
+                check_in_latitude=0.0,
+                check_in_longitude=0.0,
+                distance_from_location_meters=None,
+                is_late=False,
+                late_by_minutes=0,
+                status="not_marked",
+                date=today,
+            )
+        )
+
+    if new_records:
+        db.bulk_save_objects(new_records)
+        db.commit()
+        print(f"Created {len(new_records)} attendance records for {today}")

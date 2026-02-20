@@ -103,24 +103,26 @@ export default function AnalyticsPage() {
   }
 
   const totalEmployees = stats?.total_employees || 0
-  const attendanceRate = totalEmployees > 0 
-    ? Math.round(((stats?.today_present || 0) / totalEmployees) * 100) 
+  const notMarkedCount = stats?.today_not_marked || 0
+  const attendanceRate = (totalEmployees - notMarkedCount) > 0 
+    ? Math.round(((stats?.today_present || 0) / (totalEmployees - notMarkedCount)) * 100)
     : 0
 
   const todayData = [
     { name: "Present", value: stats?.today_present || 0, color: COLORS.present },
     { name: "Late", value: stats?.today_late || 0, color: COLORS.late },
+    { name: "Not Marked", value: notMarkedCount, color: COLORS.checkedOut },
     { name: "Absent", value: stats?.today_absent || 0, color: COLORS.absent },
-    { name: "Checked Out", value: stats?.today_checked_out || 0, color: COLORS.checkedOut },
   ].filter(d => d.value > 0)
 
   const trendData = absentTrends.map(trend => ({
-    date: new Date(trend.date).toLocaleDateString("en-US", { weekday: "short" }),
+    date: new Date(trend.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    fullDate: trend.date,
     present: trend.present,
     absent: trend.absent,
     total: trend.present + trend.absent,
     rate: Math.round((trend.present / (trend.present + trend.absent)) * 100) || 0
-  })).reverse()
+  }))
 
   const topLateEmployees = lateFrequency
     .sort((a, b) => b.late_percentage - a.late_percentage)
@@ -199,7 +201,7 @@ export default function AnalyticsPage() {
               variant={activeView === tab.id ? "default" : "ghost"}
               size="sm"
               onClick={() => setActiveView(tab.id as typeof activeView)}
-              className={activeView === tab.id ? "bg-indigo-600" : "text-slate-600"}
+              className={activeView === tab.id ? "bg-primary" : "text-slate-600"}
             >
               <tab.icon className="w-4 h-4 mr-2" />
               {tab.label}
@@ -209,7 +211,7 @@ export default function AnalyticsPage() {
 
         {activeView === "overview" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -243,6 +245,19 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
                       <Clock className="w-6 h-6 text-amber-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-500 text-sm">Not Marked</p>
+                      <p className="text-3xl font-bold text-slate-600">{notMarkedCount}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-slate-600" />
                     </div>
                   </div>
                 </CardContent>
@@ -404,18 +419,19 @@ export default function AnalyticsPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Weekly Attendance Trends</CardTitle>
+                <CardTitle>Attendance Overview - Last 7 Days</CardTitle>
               </CardHeader>
               <CardContent>
                 {trendData.length > 0 ? (
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={trendData}>
+                      <BarChart data={trendData} barSize={40}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                         <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
                         <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
                         <Tooltip 
                           contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          formatter={(value, name) => [value, name === 'present' ? 'Present' : name === 'absent' ? 'Absent' : name]}
                         />
                         <Legend />
                         <Bar dataKey="present" name="Present" fill={COLORS.present} radius={[4, 4, 0, 0]} />
@@ -431,43 +447,78 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
+            <Card>
+              <CardHeader>
+                <CardTitle>Attendance Rate Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {trendData.length > 0 ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={trendData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} stroke="#94a3b8" tickFormatter={(value) => `${value}%`} />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: 8 }}
+                          formatter={(value) => [`${value}%`, 'Attendance Rate']}
+                          labelFormatter={(label) => `Date: ${label}`}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="rate" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={3}
+                          dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 6 }}
+                          name="Attendance Rate %"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500">No data</div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Attendance Rate by Day</CardTitle>
+                  <CardTitle>Daily Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {trendData.length > 0 ? (
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={trendData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                          <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                          <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                          <Tooltip 
-                            contentStyle={{ borderRadius: 8 }}
-                            formatter={(value) => [`${value}%`, 'Attendance Rate']}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="rate" 
-                            stroke="#8b5cf6" 
-                            strokeWidth={3}
-                            dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 6 }}
-                            name="Attendance Rate %"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-slate-500">No data</div>
-                  )}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-3 font-medium text-slate-600">Date</th>
+                          <th className="text-right py-2 px-3 font-medium text-slate-600">Present</th>
+                          <th className="text-right py-2 px-3 font-medium text-slate-600">Absent</th>
+                          <th className="text-right py-2 px-3 font-medium text-slate-600">Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {trendData.map((day, idx) => (
+                          <tr key={idx} className="border-b hover:bg-slate-50">
+                            <td className="py-2 px-3">{day.date}</td>
+                            <td className="py-2 px-3 text-right text-emerald-600 font-medium">{day.present}</td>
+                            <td className="py-2 px-3 text-right text-red-600">{day.absent}</td>
+                            <td className="py-2 px-3 text-right">
+                              <span className={day.rate >= 90 ? "text-emerald-600" : day.rate >= 70 ? "text-amber-600" : "text-red-600"}>
+                                {day.rate}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Late Frequency Analysis</CardTitle>
+                  <CardTitle>Top Late Arrivals</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {lateFrequency.length > 0 ? (

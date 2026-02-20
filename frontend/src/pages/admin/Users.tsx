@@ -182,19 +182,17 @@ export default function AdminUsersPage() {
     return ["Employee"]
   }
 
-  const filteredEmployees = activeTab === "employees" 
-    ? employees.filter(emp => !emp.supervisor_id || emp.supervisor_id === null)
-    : employees
+  const filteredEmployees = employees
 
   const getEmployeesBySupervisor = (supervisorId: number) => {
-    return employees.filter(emp => emp.supervisor_id === supervisorId)
+    return employees.filter(emp => Number(emp.supervisor_id) === supervisorId)
   }
 
   if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </DashboardLayout>
     )
@@ -207,14 +205,14 @@ export default function AdminUsersPage() {
         { label: "Users" },
       ]}
       actions={
-        <Button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary/90 cursor-pointer">
           <Plus className="w-4 h-4 mr-2" />
           Add User
         </Button>
       }
     >
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
+        <h1 className="text-2xl font-bold text-foreground">User Management</h1>
         {error && (
           <div className="p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">
             <div className="flex items-center gap-2">
@@ -228,7 +226,7 @@ export default function AdminUsersPage() {
           <Button
             variant={activeTab === "supervisors" ? "default" : "outline"}
             onClick={() => setActiveTab("supervisors")}
-            className={activeTab === "supervisors" ? "bg-indigo-600" : ""}
+            className={activeTab === "supervisors" ? "bg-primary" : ""}
           >
             <Users className="w-4 h-4 mr-2" />
             Supervisors ({supervisors.length})
@@ -236,7 +234,7 @@ export default function AdminUsersPage() {
           <Button
             variant={activeTab === "employees" ? "default" : "outline"}
             onClick={() => setActiveTab("employees")}
-            className={activeTab === "employees" ? "bg-indigo-600" : ""}
+            className={activeTab === "employees" ? "bg-primary" : ""}
           >
             <Users className="w-4 h-4 mr-2" />
             Employees ({employees.length})
@@ -310,28 +308,28 @@ export default function AdminUsersPage() {
             <CardContent className="p-0">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-slate-600">Name</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-600">Email</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-600">Role</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-600">Location</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-600">Supervisor</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-600">Status</th>
-                    <th className="text-right py-3 px-4 font-medium text-slate-600">Actions</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Email</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Role</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Location</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Supervisor</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEmployees.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-slate-50">
-                      <td className="py-3 px-4">{user.name}</td>
-                      <td className="py-3 px-4 text-slate-600">{user.email}</td>
+                    <tr key={user.id} className="border-b border-border hover:bg-muted/50">
+                      <td className="py-3 px-4 text-foreground">{user.name}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                           {user.role}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-slate-600">{user.location?.name || "-"}</td>
-                      <td className="py-3 px-4 text-slate-600">{user.supervisor?.name || "-"}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{user.location?.name || "-"}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{user.supervisor?.name || "-"}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeColor(user.status)}`}>
                           {user.status}
@@ -339,10 +337,10 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(user)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(user)} className="cursor-pointer">
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(user.id)} className="text-red-600">
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(user.id)} className="text-destructive cursor-pointer">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -352,7 +350,7 @@ export default function AdminUsersPage() {
                 </tbody>
               </table>
               {filteredEmployees.length === 0 && (
-                <div className="text-center py-8 text-slate-500">No employees found</div>
+                <div className="text-center py-8 text-muted-foreground">No employees found</div>
               )}
             </CardContent>
           </Card>
@@ -462,7 +460,7 @@ export default function AdminUsersPage() {
                   <Button type="button" variant="outline" onClick={closeModal} className="flex-1" disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
