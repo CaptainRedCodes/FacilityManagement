@@ -223,6 +223,35 @@ def get_my_employees(
     return db.query(User).filter(User.supervisor_id == current_user.id).all()
 
 
+@users_router.get("/me/grand-employees", response_model=List[UserResponse])
+def get_my_grand_employees(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_supervisor),
+):
+    """
+    Get employees under supervisors that report to current supervisor.
+    (Grand subordinates - employees of my subordinate supervisors)
+    """
+    my_subordinate_supervisor_ids = [
+        u.id
+        for u in db.query(User)
+        .filter(User.supervisor_id == current_user.id, User.role == "Supervisor")
+        .all()
+    ]
+
+    if not my_subordinate_supervisor_ids:
+        return []
+
+    return (
+        db.query(User)
+        .filter(
+            User.supervisor_id.in_(my_subordinate_supervisor_ids),
+            User.role == "Employee",
+        )
+        .all()
+    )
+
+
 @users_router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: int,
@@ -284,10 +313,15 @@ def create_user(
                 detail="Admin cannot create another Admin",
             )
     elif current_user.role == "Supervisor":
-        if target_role in ["Admin", "Supervisor"]:
+        if target_role == "Admin":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Supervisors can only create Employees",
+                detail="Supervisors cannot create Admins",
+            )
+        if target_role == "Supervisor":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only Admin can create Supervisors",
             )
         if not current_user.location_id:
             raise HTTPException(
@@ -377,6 +411,58 @@ def update_user(
             value = value.value
         setattr(user, field, value)
 
+    db.commit()
+    db.refresh(user)
+
+    return UserResponse.model_validate(user)
+
+
+@users_router.put("/{user_id}/supervisor", response_model=UserResponse)
+def update_user_supervisor(
+    user_id: int,
+    supervisor_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """
+    Update user's supervisor. Admin only.
+    Used to reassign employees between supervisors or add supervisor under supervisor.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if user.role == "Admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot change supervisor for Admin",
+        )
+
+    if supervisor_id is not None:
+        if supervisor_id == user.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User cannot be their own supervisor",
+            )
+
+        if supervisor_id != 0:
+            supervisor = db.query(User).filter(User.id == supervisor_id).first()
+            if not supervisor:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Supervisor not found",
+                )
+            if supervisor.role != "Supervisor":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Can only assign Supervisor as supervisor",
+                )
+
+    user.supervisor_id = supervisor_id if supervisor_id != 0 else None
     db.commit()
     db.refresh(user)
 

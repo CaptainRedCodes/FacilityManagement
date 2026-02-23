@@ -123,6 +123,30 @@ export default function EmployeeDashboard() {
     return `${hours} hrs ${minutes} mins`
   }
 
+  const getWeeklyHours = () => {
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - dayOfWeek)
+    startOfWeek.setHours(0, 0, 0, 0)
+    
+    let totalMinutes = 0
+    for (const record of history) {
+      const recordDate = new Date(record.date)
+      if (recordDate >= startOfWeek && recordDate <= now) {
+        if (record.check_in_time) {
+          const checkIn = new Date(record.check_in_time)
+          const checkOut = record.check_out_time ? new Date(record.check_out_time) : now
+          const diff = checkOut.getTime() - checkIn.getTime()
+          totalMinutes += diff / (1000 * 60)
+        }
+      }
+    }
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = Math.floor(totalMinutes % 60)
+    return `${hours} hrs ${minutes} mins`
+  }
+
   const getStatusBadge = (attendance: AttendanceRecord) => {
     if (attendance.status === "checked_out") {
       return <Badge variant="outline" className="bg-muted text-muted-foreground">Checked Out</Badge>
@@ -152,17 +176,21 @@ export default function EmployeeDashboard() {
   }
 
   const getMonthStats = () => {
-    const monthDays = getMonthDays()
-    const present = history.filter(
-      (a) => a.date.startsWith(selectedMonth) && a.status === "present"
+    const monthHistory = history.filter((a) => a.date.startsWith(selectedMonth))
+    const today = new Date().toISOString().split("T")[0]
+    
+    const present = monthHistory.filter(
+      (a) => a.status === "present"
     ).length
-    const late = history.filter(
-      (a) => a.date.startsWith(selectedMonth) && a.is_late
+    const checkedOut = monthHistory.filter(
+      (a) => a.status === "checked_out"
     ).length
-    const checkedOut = history.filter(
-      (a) => a.date.startsWith(selectedMonth) && a.status === "checked_out"
+    const late = monthHistory.filter(
+      (a) => a.status === "present" && a.is_late
     ).length
-    const absent = monthDays.length - present - checkedOut
+    const absent = monthHistory.filter(
+      (a) => a.status === "absent" || (a.status === "not_marked" && a.date !== today)
+    ).length
 
     return { present, late, checkedOut, absent }
   }
@@ -235,9 +263,14 @@ export default function EmployeeDashboard() {
                     </p>
                   </div>
                   <div className="bg-muted rounded-lg p-4">
-                    <p className="text-muted-foreground text-sm">Working Duration</p>
+                    <p className="text-muted-foreground text-sm">Today's Duration</p>
                     <p className="text-xl font-semibold text-foreground">{getWorkingDuration()}</p>
                   </div>
+                </div>
+
+                <div className="bg-muted rounded-lg p-4 max-w-sm mx-auto w-full">
+                  <p className="text-muted-foreground text-sm">This Week's Total</p>
+                  <p className="text-xl font-semibold text-foreground">{getWeeklyHours()}</p>
                 </div>
 
                 {todayAttendance?.distance_from_location_meters && (
@@ -304,6 +337,11 @@ export default function EmployeeDashboard() {
                     Late by {todayAttendance.late_by_minutes} minutes
                   </Badge>
                 )}
+
+                <div className="bg-muted rounded-lg p-4 max-w-sm mx-auto w-full">
+                  <p className="text-muted-foreground text-sm">This Week's Total</p>
+                  <p className="text-xl font-semibold text-foreground">{getWeeklyHours()}</p>
+                </div>
               </div>
             )}
           </CardContent>

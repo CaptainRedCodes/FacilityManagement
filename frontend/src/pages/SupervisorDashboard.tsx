@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Plus, Loader2, AlertCircle, Pencil, Trash2, X, Users, Clock, MapPin } from "lucide-react"
+import { Plus, Loader2, AlertCircle, Pencil, Trash2, X, Users, Clock, MapPin, CheckCircle2, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -7,72 +7,88 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StatsCard } from "@/components/ui/stats-card"
 import { EmptyState } from "@/components/ui/empty-state"
+import { CheckInButton } from "@/components/CheckInButton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { api } from "@/lib/api"
+import { attendanceApi, AttendanceRecord } from "@/api/attendance"
 import { toast } from "sonner"
 import { DashboardLayout } from "@/components/layout"
-
-type UserRole = "Admin" | "Supervisor" | "Employee"
-type UserStatus = "Active" | "Inactive"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface User {
   id: number
   name: string
   email: string
-  role: UserRole
+  role: string
   location_id: number | null
   location: { id: number; name: string } | null
   department_id: number | null
-  department: { id: number; name: string } | null
   supervisor_id: number | null
-  supervisor: { id: number; name: string } | null
-  status: UserStatus
+  status: string
   created_at: string
   updated_at: string
 }
 
-interface AttendanceRecord {
-  id: number
-  employee_id: number
-  employee_name: string
-  location_id: number
-  location_name: string
-  check_in_time: string
-  check_out_time: string | null
-  is_late: boolean
-  late_by_minutes: number
-  status: string
-  date: string
-}
-
 export default function SupervisorDashboard() {
+  const { user } = useAuth()
   const [employees, setEmployees] = useState<User[]>([])
+  const [myAttendance, setMyAttendance] = useState<AttendanceRecord | null>(null)
   const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord[]>([])
+  const [history, setHistory] = useState<AttendanceRecord[]>([])
+  const [locations, setLocations] = useState<{id: number, name: string}[]>([])
+  const [currentTime, setCurrentTime] = useState(new Date())
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<User | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     location_id: null as number | null,
+    role: "Employee" as "Employee" | "Supervisor",
   })
 
   useEffect(() => {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const fetchData = async () => {
     try {
       setIsLoading(true)
-      const [employeesRes, attendanceRes] = await Promise.all([
+      const [employeesRes, attendanceRes, myAttendanceRes, locationsRes, historyRes] = await Promise.all([
         api.get("/users/me/employees"),
         api.get("/attendance/all", { params: { page_size: 100 } }),
+        attendanceApi.getTodayAttendance(),
+        api.get("/locations"),
+        attendanceApi.getHistory(),
       ])
       setEmployees(employeesRes.data)
-      setTodayAttendance(attendanceRes.data.items.filter((a: AttendanceRecord) => a.date === new Date().toISOString().split("T")[0]))
+      setMyAttendance(myAttendanceRes)
+      setLocations(locationsRes.data)
+      setHistory(historyRes)
+      const today = new Date().toISOString().split("T")[0]
+      setTodayAttendance(attendanceRes.data.items.filter((a: AttendanceRecord) => a.date === today))
     } catch (err) {
       setError("Failed to load data")
       console.error(err)
@@ -80,6 +96,81 @@ export default function SupervisorDashboard() {
       setIsLoading(false)
     }
   }
+
+  const handleCheckInSuccess = (attendance: AttendanceRecord | null) => {
+    if (attendance) {
+      setMyAttendance(attendance)
+      fetchData()
+    }
+  }
+
+  const handleCheckOut = async () => {
+    setIsCheckingOut(true)
+    try {
+      const result = await attendanceApi.checkout()
+      setMyAttendance(result)
+      toast.success("Checked out successfully")
+      fetchData()
+    } catch (error) {
+      toast.error("Failed to check out. Please try again.")
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+  }
+
+  const getWorkingDuration = () => {
+    if (!myAttendance?.check_in_time) return "0 hrs 0 mins"
+    const checkIn = new Date(myAttendance.check_in_time)
+    const checkOut = myAttendance.check_out_time
+      ? new Date(myAttendance.check_out_time)
+      : currentTime
+    const diff = checkOut.getTime() - checkIn.getTime()
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    return `${hours} hrs ${minutes} mins`
+  }
+
+  const getWeeklyHours = () => {
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - dayOfWeek)
+    startOfWeek.setHours(0, 0, 0, 0)
+    
+    let totalMinutes = 0
+    for (const record of history) {
+      const recordDate = new Date(record.date)
+      if (recordDate >= startOfWeek && recordDate <= now) {
+        if (record.check_in_time) {
+          const checkIn = new Date(record.check_in_time)
+          const checkOut = record.check_out_time ? new Date(record.check_out_time) : now
+          const diff = checkOut.getTime() - checkIn.getTime()
+          totalMinutes += diff / (1000 * 60)
+        }
+      }
+    }
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = Math.floor(totalMinutes % 60)
+    return `${hours} hrs ${minutes} mins`
+  }
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const isCheckedIn = myAttendance !== null && myAttendance.status === "present"
+  const isCheckedOut = myAttendance?.status === "checked_out"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,13 +182,16 @@ export default function SupervisorDashboard() {
         await api.put(`/users/${editingEmployee.id}`, {
           name: formData.name,
         })
-        toast.success("Employee updated successfully")
+        toast.success("User updated successfully")
       } else {
         await api.post("/users", {
-          ...formData,
-          role: "Employee",
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          location_id: formData.location_id,
+          role: formData.role,
         })
-        toast.success("Employee added successfully")
+        toast.success(`${formData.role} added successfully`)
       }
       await fetchData()
       closeModal()
@@ -120,6 +214,7 @@ export default function SupervisorDashboard() {
       email: employee.email,
       password: "",
       location_id: employee.location_id,
+      role: employee.role as "Employee" | "Supervisor",
     })
     setIsModalOpen(true)
   }
@@ -149,6 +244,7 @@ export default function SupervisorDashboard() {
       email: "",
       password: "",
       location_id: null,
+      role: "Employee" as "Employee" | "Supervisor",
     })
     setError(null)
   }
@@ -168,11 +264,18 @@ export default function SupervisorDashboard() {
   }
 
   const getCheckedInCount = () => {
-    return todayAttendance.filter(a => a.status === "present").length
+    const employeeIds = new Set(employees.map(e => e.id))
+    return todayAttendance.filter(a => employeeIds.has(a.employee_id) && (a.status === "present" || a.status === "checked_out")).length
   }
 
   const getLateCount = () => {
-    return todayAttendance.filter(a => a.is_late).length
+    const employeeIds = new Set(employees.map(e => e.id))
+    return todayAttendance.filter(a => employeeIds.has(a.employee_id) && a.is_late).length
+  }
+
+  const getNotCheckedInCount = () => {
+    const employeeIds = new Set(employees.map(e => e.id))
+    return todayAttendance.filter(a => employeeIds.has(a.employee_id) && a.status === "not_marked").length
   }
 
   if (isLoading) {
@@ -191,17 +294,126 @@ export default function SupervisorDashboard() {
         { label: "Dashboard", href: "/" },
         { label: "My Team" },
       ]}
-      actions={
-        <Button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary/90 cursor-pointer">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Employee
-        </Button>
-      }
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">My Team</h1>
-          <p className="text-muted-foreground">Manage your employees and view their attendance</p>
+        {/* My Attendance Section */}
+        <Card className="shadow-lg border-border">
+          <CardContent className="pt-6">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-full mb-4">
+                <Clock className="w-8 h-8 text-primary-foreground" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">{formatTime(currentTime)}</p>
+              <p className="text-muted-foreground mt-1">Your assigned location: <strong>{typeof user?.location === 'object' ? user?.location?.name : user?.location || "Not assigned"}</strong></p>
+            </div>
+
+            {!isCheckedIn && !isCheckedOut && (
+              <div className="text-center space-y-4">
+                <CheckInButton onSuccess={handleCheckInSuccess} />
+                <p className="text-sm text-muted-foreground">Tap the button above to check in</p>
+              </div>
+            )}
+
+            {isCheckedIn && (
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2 text-emerald-600">
+                  <CheckCircle2 className="w-6 h-6" />
+                  <span className="text-xl font-semibold text-foreground">You're checked in</span>
+                </div>
+
+                {myAttendance?.is_late && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800">
+                    <AlertCircle className="w-4 h-4 inline mr-2" />
+                    You checked in {myAttendance.late_by_minutes} minutes late
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="text-muted-foreground text-sm">Check-in Time</p>
+                    <p className="text-xl font-semibold text-foreground">
+                      {formatDateTime(myAttendance?.check_in_time || "")}
+                    </p>
+                  </div>
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="text-muted-foreground text-sm">Today's Duration</p>
+                    <p className="text-xl font-semibold text-foreground">{getWorkingDuration()}</p>
+                  </div>
+                </div>
+
+                <div className="bg-muted rounded-lg p-4 max-w-sm mx-auto w-full">
+                  <p className="text-muted-foreground text-sm">This Week's Total</p>
+                  <p className="text-xl font-semibold text-foreground">{getWeeklyHours()}</p>
+                </div>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full max-w-sm cursor-pointer">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Check Out
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Ready to leave?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to check out? Make sure you've completed your work for the day.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCheckOut}
+                        disabled={isCheckingOut}
+                        className="bg-destructive hover:bg-destructive/90 cursor-pointer"
+                      >
+                        {isCheckingOut ? "Checking out..." : "Check Out"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+
+            {isCheckedOut && (
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <CheckCircle2 className="w-6 h-6" />
+                  <span className="text-xl font-semibold text-foreground">You've checked out</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="text-muted-foreground text-sm">Check-in Time</p>
+                    <p className="text-xl font-semibold text-foreground">
+                      {formatDateTime(myAttendance?.check_in_time || "")}
+                    </p>
+                  </div>
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="text-muted-foreground text-sm">Check-out Time</p>
+                    <p className="text-xl font-semibold text-foreground">
+                      {formatDateTime(myAttendance?.check_out_time || "")}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-muted rounded-lg p-4 max-w-sm mx-auto w-full">
+                  <p className="text-muted-foreground text-sm">This Week's Total</p>
+                  <p className="text-xl font-semibold text-foreground">{getWeeklyHours()}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Team Section */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Team Management</h2>
+            <p className="text-muted-foreground">Manage your employees and view their attendance</p>
+          </div>
+          <Button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary/90 cursor-pointer">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Employee
+          </Button>
         </div>
 
         {error && (
@@ -234,7 +446,7 @@ export default function SupervisorDashboard() {
           />
           <StatsCard
             title="Not Checked In"
-            value={employees.length - getCheckedInCount()}
+            value={getNotCheckedInCount()}
             icon={MapPin}
             variant="danger"
           />
@@ -311,7 +523,7 @@ export default function SupervisorDashboard() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>{editingEmployee ? "Edit Employee" : "Add Employee"}</CardTitle>
+              <CardTitle>{editingEmployee ? "Edit User" : `Add ${formData.role}`}</CardTitle>
               <Button variant="ghost" size="sm" onClick={closeModal}>
                 <X className="w-4 h-4" />
               </Button>
@@ -340,17 +552,48 @@ export default function SupervisorDashboard() {
                   />
                 </div>
                 {!editingEmployee && (
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required={!editingEmployee}
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required={!editingEmployee}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <select
+                        id="location"
+                        value={formData.location_id || ""}
+                        onChange={(e) => setFormData({ ...formData, location_id: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        disabled={isSubmitting}
+                        required
+                      >
+                        <option value="">Select location</option>
+                        {locations.map((loc) => (
+                          <option key={loc.id} value={loc.id}>{loc.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role</Label>
+                      <select
+                        id="role"
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value as "Employee" | "Supervisor" })}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        disabled={isSubmitting}
+                      >
+                        <option value="Employee">Employee</option>
+                        <option value="Supervisor">Supervisor</option>
+                      </select>
+                    </div>
+                  </>
                 )}
                 {error && (
                   <div className="p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">
@@ -373,7 +616,7 @@ export default function SupervisorDashboard() {
                     ) : editingEmployee ? (
                       "Update"
                     ) : (
-                      "Add Employee"
+                      `Add ${formData.role}`
                     )}
                   </Button>
                 </div>

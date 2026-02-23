@@ -34,8 +34,9 @@ const adminNavItems: NavItem[] = [
 ]
 
 const supervisorNavItems: NavItem[] = [
-  { label: "My Team", href: "/dashboard/supervisor", icon: LayoutDashboard },
+  { label: "My Dashboard", href: "/dashboard/supervisor", icon: LayoutDashboard },
   { label: "Attendance", href: "/admin/attendance", icon: Calendar },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
 ]
 
 const employeeNavItems: NavItem[] = [

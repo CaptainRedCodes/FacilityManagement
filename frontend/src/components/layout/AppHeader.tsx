@@ -14,7 +14,7 @@ interface AppHeaderProps {
   onMenuClick?: () => void
 }
 
-export function AppHeader({ breadcrumbs, onMenuClick}: AppHeaderProps) {
+export function AppHeader({ breadcrumbs, actions, onMenuClick}: AppHeaderProps) {
   const { user } = useAuth()
   const location = useLocation()
 
@@ -80,6 +80,7 @@ export function AppHeader({ breadcrumbs, onMenuClick}: AppHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        {actions}
         <div className="flex items-center gap-2.5">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-gray-900">{user?.name}</p>

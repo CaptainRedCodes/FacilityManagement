@@ -91,19 +91,35 @@ def check_in(
             shift_config.grace_period_minutes,
         )
 
-    attendance = Attendance(
-        employee_id=current_user.id,
-        location_id=location.id,
-        check_in_time=now,
-        check_in_latitude=check_in_data.latitude,
-        check_in_longitude=check_in_data.longitude,
-        distance_from_location_meters=distance,
-        is_late=is_late,
-        late_by_minutes=late_by_minutes,
-        status="present",
-        date=today,
+    attendance = (
+        db.query(Attendance)
+        .filter(Attendance.employee_id == current_user.id, Attendance.date == today)
+        .first()
     )
-    db.add(attendance)
+
+    if attendance:
+        attendance.check_in_time = now
+        attendance.check_in_latitude = check_in_data.latitude
+        attendance.check_in_longitude = check_in_data.longitude
+        attendance.distance_from_location_meters = distance
+        attendance.is_late = is_late
+        attendance.late_by_minutes = late_by_minutes
+        attendance.status = "present"
+    else:
+        attendance = Attendance(
+            employee_id=current_user.id,
+            location_id=location.id,
+            check_in_time=now,
+            check_in_latitude=check_in_data.latitude,
+            check_in_longitude=check_in_data.longitude,
+            distance_from_location_meters=distance,
+            is_late=is_late,
+            late_by_minutes=late_by_minutes,
+            status="present",
+            date=today,
+        )
+        db.add(attendance)
+
     db.commit()
     db.refresh(attendance)
 
@@ -519,3 +535,35 @@ def export_to_pdf(records: List[Attendance], start_date: date, end_date: date):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="reportlab not installed. Run: pip install reportlab",
         )
+
+
+@router.post("/mark-absent")
+def mark_employees_absent(
+    date: Optional[date] = Query(None),
+    auto: bool = Query(False, description="Auto-mark after office hours"),
+    current_user: User = Depends(require_supervisor_or_admin),
+    db: Session = Depends(get_db),
+):
+    """Mark not_marked employees as absent for a specific date."""
+    if auto:
+        result = attendance_service.auto_mark_absent_after_hours(db)
+    else:
+        target_date = date if date else date.today()
+        result = attendance_service.mark_absent_employees(db, target_date)
+
+    return result
+
+
+@router.post("/generate-fake")
+def generate_fake_attendance_manual(
+    date: Optional[date] = Query(None, description="Target date for fake attendance"),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Manually generate fake attendance data for demo purposes.
+    Only available to Admin. Use this to populate today's attendance with random data.
+    """
+    target_date = date if date else date.today()
+    result = attendance_service.generate_fake_attendance(db, target_date)
+    return result

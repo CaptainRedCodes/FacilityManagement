@@ -87,7 +87,8 @@ export default function AttendanceRecordsPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `attendance_${new Date().toISOString().split("T")[0]}.${format}`
+      const extension = format === "excel" ? "xlsx" : "pdf"
+      a.download = `attendance_${new Date().toISOString().split("T")[0]}.${extension}`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)

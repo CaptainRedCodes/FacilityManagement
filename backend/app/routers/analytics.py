@@ -64,11 +64,15 @@ def get_attendance_summary(
     late_count = len([r for r in today_records if r.is_late])
     checked_out_count = len([r for r in today_records if r.status == "checked_out"])
 
-    not_marked_count = (
-        db.query(Attendance)
-        .filter(Attendance.date == date, Attendance.status == "not_marked")
-        .count()
+    not_marked_query = db.query(Attendance).filter(
+        Attendance.date == date, Attendance.status == "not_marked"
     )
+    if current_user.role == "Supervisor" and current_user.location_id:
+        not_marked_query = not_marked_query.filter(
+            Attendance.location_id == current_user.location_id
+        )
+    not_marked_count = not_marked_query.count()
+
     absent_count = total_employees - present_count - not_marked_count
     if absent_count < 0:
         absent_count = 0

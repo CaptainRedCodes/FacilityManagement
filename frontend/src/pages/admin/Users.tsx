@@ -94,7 +94,7 @@ export default function AdminUsersPage() {
           role: formData.role,
           location_id: formData.location_id,
         }
-        if (formData.role === "Employee" && supervisors.length > 0) {
+        if (formData.role === "Employee") {
           updateData.supervisor_id = formData.supervisor_id
         }
         await api.put(`/users/${editingUser.id}`, updateData)
@@ -431,7 +431,7 @@ export default function AdminUsersPage() {
                     ))}
                   </select>
                 </div>
-                {formData.role === "Employee" && supervisors.length > 0 && (
+                {formData.role === "Employee" && (
                   <div className="space-y-2">
                     <Label htmlFor="supervisor">Supervisor</Label>
                     <select
